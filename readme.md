@@ -167,7 +167,7 @@ Pull requests welcome. If you find a bug:
 
 ## 📜 License
 
-MIT.
+MIT — free to use, modify, and share. See `LICENSE` for details.
 
 ---
 
