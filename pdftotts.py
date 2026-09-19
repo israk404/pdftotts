@@ -328,6 +328,41 @@ def extract_pdf_pages(pdf_path: str, project_dir: str, frag_re,
                 "page": i,
             })
 
+        # ── Reading-order sort ──────────────────────────────────────────
+        # PDF content streams don't guarantee visual reading order —
+        # titles/headings are often drawn last (on top), so they appear
+        # last in get_text("words") and get narrated last.
+        # Fix: bucket words into horizontal bands (lines) by y0, then
+        # sort each band left-to-right. Band tolerance = half a median
+        # word-height so words on the same visual line group together
+        # even if their baselines differ by a pixel or two.
+        if raw_words:
+            heights_px = sorted(w["y1"] - w["y0"] for w in raw_words)
+            med_h      = heights_px[len(heights_px) // 2] if heights_px else 12
+            band_tol   = max(4.0, med_h * 0.55)
+
+            # Sort first by y0 so we can group into lines top-to-bottom
+            raw_words.sort(key=lambda w: w["y0"])
+
+            lines_ordered = []
+            current_band  = [raw_words[0]]
+            band_y        = raw_words[0]["y0"]
+
+            for w in raw_words[1:]:
+                if abs(w["y0"] - band_y) <= band_tol:
+                    current_band.append(w)
+                else:
+                    # Sort the completed band left-to-right, then commit
+                    current_band.sort(key=lambda w: w["x0"])
+                    lines_ordered.extend(current_band)
+                    current_band = [w]
+                    band_y       = w["y0"]
+
+            current_band.sort(key=lambda w: w["x0"])
+            lines_ordered.extend(current_band)
+            raw_words = lines_ordered
+        # ───────────────────────────────────────────────────────────────
+
         page_words = []
         for w in raw_words:
             page_words.extend(split_pdf_word(w, frag_re))
