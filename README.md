@@ -1,215 +1,286 @@
 # 📹 PDFtoTTS
 
-Turn any **16:9 landscape PDF** into a **narrated video** with **word-level highlighting** that sweeps across the exact page design.
+**Turn a 16:9 landscape PDF into a narrated MP4 with word-by-word highlighting — no editing software, no manual timing.**
 
-No editing software. No manual timing. Just point it at a PDF and click **Generate**.
+Point it at a PDF, pick a voice, click Generate. PDFtoTTS reads the text, synthesises speech with Microsoft Edge's free neural voices, maps every spoken word back to its exact position on the page, and renders a video where a coloured highlight sweeps across the real page design in sync with the narration.
 
-![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)
-![FFmpeg](https://img.shields.io/badge/FFmpeg-required-green)
-![License: MIT](https://img.shields.io/badge/license-MIT-yellow)
+> **v2.0** — Major update: eliminates highlight drift on long videos, adds chapter markers, karaoke mode, blurred background, sentence-aware chunking, and dual-voice headings.
 
 ![PDFtoTTS screenshot](screenshot.png)
 
 ---
 
-## ✨ What it does
+## ✨ Features
 
-- 🎙️ **Microsoft Edge neural voices** — natural TTS, free, no API key
-- 🖍️ **Word-by-word highlight** — a marker sweeps across each spoken word, positioned using the PDF's own text coordinates
-- 📄 **Page design preserved** — tables, headings, colours, borders, images, everything
-- ⏱️ **Automatic page transitions** in sync with the narration
-- 💧 **Optional watermark** with custom text, position, font, size, and colour
-- 🔢 **Spoken symbol control** — choose whether `%`, `$`, `&`, `@`, `+`, `=` are read aloud or silently dropped
-- 🎯 **Preview mode** — render just the first page (~30 s) before committing to the full video
-- 💾 **Cached TTS** — reruns reuse completed chunks, so the second run is instant
-- 🎛️ **Full GUI** — two-column layout, no CLI required
+| Feature | Details |
+|---|---|
+| **Neural TTS** | Microsoft Edge voices — free, no API key, 20+ English accents |
+| **Word-level highlight** | Marker positioned using the PDF's own text coordinates |
+| **Drift-free sync** | Offsets built from real measured audio durations, not event estimates — stays locked even on 2-hour videos |
+| **Page design preserved** | Tables, headings, colours, borders, images — all intact |
+| **Auto page transitions** | Synced to narration; flips after the last complete sentence on each page |
+| **Chapter markers** | Embedded in the MP4 at every heading — navigate with VLC, mpv, or any chapter-aware player |
+| **Karaoke mode** | Current line dims to context, active word blazes full colour |
+| **Blurred background** | Non-16:9 PDFs get a blurred zoomed backdrop instead of black bars |
+| **Dual-voice headings** | Assign a separate voice to heading text for emphasis |
+| **Watermark** | Configurable text, position, font, size, colour |
+| **Preview mode** | Render first page only before committing to the full run |
+| **Smart cache** | Completed TTS chunks are cached — a second run is nearly instant |
+| **Colour presets** | Six built-in highlight schemes, fully customisable |
+| **Spoken symbols** | Opt-in per symbol: `%` `$` `&` `@` `+` `=` |
+| **No command line** | Two-column GUI, settings auto-saved between runs |
+
+---
+
+## 🖼️ How it looks
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  PDF page rendered at 1920×1080                         │
+│                                                         │
+│  Chapter 3: Neural Networks                             │
+│                                                         │
+│  A neural network is a series of algorithms that        │
+│  [━━━━━━━━━━━] ▓▓▓▓▓▓▓▓▓ ░░░░░░░░░░░░░░░░░░░░░░░       │
+│   current line   active word                            │
+│  attempts to recognise relationships in a set of        │
+│  data through a process that mimics the way the…        │
+└─────────────────────────────────────────────────────────┘
+```
+
+- **Active word** — full highlight colour (e.g. yellow `#FFEB3B`)
+- **Current line** (karaoke mode) — same colour at 30% opacity for context
+- **Heading afterglow** — highlight lingers briefly after a heading is read
 
 ---
 
 ## 📋 Requirements
 
-| Tool | Why | Install |
-|---|---|---|
-| **Python 3.8+** | Runs the app | [python.org](https://www.python.org/downloads/) |
-| **FFmpeg** | Renders the MP4 | [ffmpeg.org](https://ffmpeg.org/download.html) — must be on `PATH` |
-| **edge-tts** | Neural voice synthesis | `pip install edge-tts` |
-| **PyMuPDF** | Reads the PDF, extracts word positions | `pip install pymupdf` |
-| **OS** | Windows, macOS, Linux | Linux/macOS users: replace `os.startfile` with `xdg-open`/`open` (see [Troubleshooting](#-troubleshooting)) |
+| Requirement | Install |
+|---|---|
+| Python 3.8+ | [python.org](https://www.python.org/downloads/) |
+| FFmpeg (on PATH) | [ffmpeg.org](https://ffmpeg.org/download.html) |
+| edge-tts | `pip install edge-tts` |
+| PyMuPDF | `pip install pymupdf` |
 
-**Install everything with one command:**
-
+**Verify FFmpeg is on PATH:**
 ```bash
-pip install -r requirements.txt
-```
-
-Or individually:
-
-```bash
-pip install edge-tts pymupdf
+ffmpeg -version
 ```
 
 ---
 
 ## 🚀 Quick start
 
-1. **Prepare your PDF**
-   - Set page size to **33.87 cm × 19.05 cm** (exactly 16:9)
-   - Set orientation to **Landscape**
-   - Export as PDF
+```bash
+# 1. Clone
+git clone https://github.com/israk404/pdftotts.git
+cd pdftotts
 
-   > Non-16:9 PDFs work, but produce black letterbox bars.
+# 2. Install Python dependencies
+pip install edge-tts pymupdf
 
-2. **Run the script**
+# 3. Run
+python pdftotts.py
+```
 
-   ```bash
-   python pdftotts.py
-   ```
-
-3. **In the app**
-   - Browse to your PDF
-   - Pick an output folder
-   - Choose a voice (default: `en-US-AriaNeural`)
-   - Pick a highlight colour preset (default: **Marker yellow**)
-   - Click **▶ GENERATE VIDEO**
-
-4. **Wait.** TTS is network-bound; the first run on a large PDF can take a few minutes. The progress log shows what's happening.
-
-5. **Done.** The MP4 lands in your output folder, which opens automatically.
+The GUI opens. Select your PDF, pick a voice, and hit **▶ GENERATE VIDEO**.
 
 ---
 
-## 🖼️ How it works
+## 🖥️ GUI overview
+
+```
+┌─────────────────────┬────────────────────────┐
+│  Input              │  Colours               │
+│  Voice              │  Watermark             │
+│  Spoken Symbols     │  About                 │
+│  Playback           │                        │
+├─────────────────────┴────────────────────────┤
+│  ▶ GENERATE  ⏹ Cancel  📂 Open Folder  🗑 Clear │
+│  ████████████████░░░░░░ progress bar         │
+│  Progress log…                               │
+└──────────────────────────────────────────────┘
+```
+
+### Left panel
+
+**Input**
+- PDF file path + output folder (Browse buttons)
+
+**Voice**
+- *Body voice* — voice for all regular text (20+ EN accents)
+- *Heading voice* — optional separate voice for headings
+- *Speed* — 0.5× to 2.0×
+
+**Spoken Symbols**
+- Toggle which symbols the TTS engine reads aloud: `%` `$` `&` `@` `+` `=`
+- Unticked symbols are silently dropped before synthesis
+
+**Playback**
+- *Page transition delay* — ms to wait before flipping (default 200)
+- *Heading afterglow* — ms the highlight lingers on a heading (default 400)
+- *End tail* — silence padding at the end of the video (default 1500)
+- *Timing offset* — global nudge in ms if you want to fine-tune (usually 0 — drift is fixed automatically)
+- *Preview mode* — render first page only
+- *Karaoke mode* — dim the current line, blaze the active word
+
+### Right panel
+
+**Colours**
+- Letterbox background colour
+- Word highlight colour
+- Six built-in presets (Marker yellow, Warm amber, Neon cyan, …)
+- *Blurred background* — for non-16:9 PDFs: zoom+blur the page behind itself instead of black bars
+
+**Watermark**
+- Enable/disable, text, position (6 options), font, size, colour
+
+---
+
+## 📐 PDF tips
+
+For the cleanest result, export your PDF at **33.87 × 19.05 cm** (exact 16:9 landscape). This fills the 1920×1080 canvas with no bars.
+
+If your PDF is a different aspect ratio:
+- Default: **black bars** (letterbox)
+- With *Blurred background* on: the page is zoomed and blurred to fill the bars
+
+---
+
+## 🔄 How it works (pipeline)
 
 ```
 PDF
- │  PyMuPDF renders each page → PNG (1920×1080, aspect preserved)
- │  PyMuPDF extracts every word's bounding box in canvas coordinates
+ │
  ▼
-Per-page PNG + word bboxes
- │  edge-tts narrates the text word by word (WordBoundary events)
+1. Extract pages → PNG images + word bounding boxes (PyMuPDF)
+ │
  ▼
-Audio + per-word timings
- │  Greedy aligner matches each TTS word to its PDF bbox
+2. Chunk text → sentence-boundary-aware segments ≤ 3500 chars
+ │
  ▼
-Timed word highlights
- │  ASS subtitle file draws one semi-transparent rectangle per word,
- │  positioned at its exact bbox, timed to its audio duration
+3. TTS synthesis → per-chunk MP3 + WordBoundary events (edge-tts)
+   └─ Cached: reruns skip completed chunks
+ │
  ▼
-MP4 (page PNGs + ASS overlay + narration)
+4. Measure real MP3 durations (ffprobe)
+   └─ Scale event timings proportionally into real audio window
+   └─ Accumulate offsets from real durations → no cumulative drift
+ │
+ ▼
+5. Combine MP3 chunks → narration.wav (FFmpeg concat)
+ │
+ ▼
+6. Align WordBoundary events → PDF word bboxes
+   └─ Lookahead of 10 words, slip-resistant, ligature-aware
+ │
+ ▼
+7. Build chapter metadata (.ffmetadata) from heading positions
+ │
+ ▼
+8. Generate ASS subtitle overlay (highlights + watermark)
+   └─ Optional karaoke line-context layer
+ │
+ ▼
+9. Render final MP4 (FFmpeg: page PNGs + audio + ASS + chapters)
 ```
 
-No OCR — the PDF must have a real text layer. Scanned documents will report "No extractable text found."
+---
+
+## ⚙️ Settings file
+
+Settings are auto-saved to `~/.pdftotts_config.json` between runs. Voice, speed, colours, watermark, and all toggles persist.
 
 ---
 
-## 🎛️ Settings explained
+## 🗂️ Project cache
 
-### Voice
+Each PDF gets a `<name>_project/` folder next to the output:
 
-- **Voice** — 20+ English neural voices. `en-US-AriaNeural` (female, warm) and `en-US-GuyNeural` (male, clear) are good defaults.
-- **Speed** — 0.5 to 2.0. `0.95` is a natural study pace. `1.1` for review material. `0.85` for dense text.
+```
+my_slides_project/
+├── project.json          ← manifest (chunk state, real durations)
+├── audio/
+│   ├── chunk_0000.mp3
+│   ├── chunk_0001.mp3
+│   └── …
+├── timestamps/
+│   ├── chunk_0000_words.json
+│   └── …
+├── page_0000.png
+├── page_0001.png
+├── narration.wav
+├── highlights.ass
+└── chapters.ffmeta       ← chapter markers (if headings found)
+```
 
-### Spoken Symbols
-
-Tick symbols that should be read aloud. Unticked symbols are dropped silently from the audio and the highlight.
-
-| Symbol | Example | Default |
-|---|---|---|
-| `%` | `50%` → "fifty percent" | off |
-| `$` | `$5` → "five dollars" | off |
-| `&` | `A & B` → "A and B" | off |
-| `@` | `user@site` → "user at site" | off |
-| `+` | `C++` → "C plus plus" | off |
-| `=` | `x=5` → "x equals five" | off |
-
-### Playback
-
-- **Page transition delay** — how long before the next page's first word the page flips. Default `200 ms`. Set to `0` for hard cuts.
-- **Heading afterglow** — how long a heading's highlight lingers after being spoken. Default `400 ms`. Set to `0` to disable.
-- **End tail** — pause after the last spoken word before the video ends. Default `1500 ms`.
-- **Timing offset** — global nudge if highlights consistently lead or lag the voice. Usually `0`; try `±50` if a specific voice feels off.
-- **Preview mode** — render only the first page. Output file gets the `_preview` suffix.
-
-### Colours
-
-- **Letterbox background** — bar colour around non-16:9 pages.
-- **Word highlight** — marker colour. Presets: Marker yellow, Warm amber, Neon cyan, Soft green, Pink highlighter, Bright white.
-
-### Watermark
-
-Enable/disable, text, position (six presets), font, size, colour. Default text is empty.
+- On rerun, completed chunks are skipped (instant second pass)
+- Click **🗑 Clear Cache** in the GUI to start fresh
 
 ---
 
-## 💡 Tips
+## 🎵 Chapter navigation
 
-- **Preview first.** Any time you change voice, speed, or colours, run **Preview mode** for a 30-second check.
-- **Use 16:9 PDFs.** A4 portrait works but produces large black bars.
-- **Clear Cache** in the toolbar deletes the `_project` folder if you want to force TTS regeneration.
-- **Caching is per-chunk.** If TTS generation fails partway through, re-run — completed chunks are reused, only the missing ones are regenerated.
-- **Delete the `_project` folder** if you change the PDF, so extraction and alignment re-run.
+If the PDF contains headings, PDFtoTTS embeds chapter markers in the MP4. You can then:
+
+- **VLC** → Playback → Chapters
+- **mpv** → `[` / `]` keys, or the chapter menu
+- **Web** (HTML5 `<video>`) — chapters appear in the seek bar in supported browsers
 
 ---
 
-## 🐛 Troubleshooting
+## 🔧 Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| `No extractable text found` | The PDF is a scan. Run OCR first: `ocrmypdf in.pdf out.pdf`. |
-| Video has huge black bars | PDF isn't 16:9. Re-export at 33.87 × 19.05 cm landscape. |
-| `FFmpeg not found` | Install FFmpeg and add it to your `PATH`. |
-| `os.startfile` error on macOS/Linux | Edit `pdftotts.py` and replace `os.startfile(path)` with `subprocess.Popen(["open", path])` (macOS) or `subprocess.Popen(["xdg-open", path])` (Linux). |
-| Audio cut off at the end | Open an issue with the log, especially the `Event timeline` and `Combined` lines. |
-| Voice sounds robotic | Try `en-US-AriaNeural`, `en-US-JennyNeural`, or `en-GB-SoniaNeural`. |
-| Highlight drifts over time | Unlikely in v1.0; if it happens, adjust `Timing offset` to `±50` ms. |
+| `FFmpeg not found` | Add FFmpeg to your system PATH and restart |
+| `No extractable text` | PDF is scanned — run OCR first (e.g. `ocrmypdf input.pdf output.pdf`) |
+| Highlight slightly off | Use the *Timing offset* slider (negative = earlier, positive = later). Usually not needed — drift is corrected automatically. |
+| Voice sounds cut off at page seams | Enable sentence-boundary chunking (on by default in v2.0) |
+| Non-16:9 black bars | Enable *Blurred background* in the Colours panel |
+| `TTS stream error` | Check internet connection; the tool retries up to 6× with backoff |
+| Output file already exists | A `_v2`, `_v3` … suffix is added automatically |
 
 ---
 
-## 📂 Output structure
+## 📦 Output
 
-When you generate a video, a sibling folder is created:
-
-```
-<output_folder>/
-├── YourDocument.mp4                 ← the final video
-└── YourDocument_project/
-    ├── page_0000.png                ← rendered page images
-    ├── audio/
-    │   ├── chunk_0000.mp3           ← cached TTS per chunk
-    │   └── chunk_0001.mp3
-    ├── timestamps/
-    │   ├── chunk_0000_words.json    ← word-level timings
-    │   └── chunk_0001_words.json
-    ├── narration.wav                ← combined audio (temporary)
-    ├── highlights.ass               ← subtitle/overlay file (inspectable)
-    └── project.json                 ← cache manifest
-```
-
-You can safely delete the entire `_project` folder at any time. It regenerates on the next run.
+- **`<pdf-name>.mp4`** — 1920×1080, H.264 + AAC 192k, chapter markers embedded, `+faststart` for web streaming
+- **`<pdf-name>_preview.mp4`** — first page only (Preview mode)
 
 ---
 
-## 🤝 Contributing
+## 🗒️ Changelog
 
-Pull requests welcome. If you find a bug:
+### v2.0
+- **FIX (critical):** Highlight drift eliminated — offsets now built from real per-chunk MP3 durations measured by ffprobe. Highlights stay locked to the voice even on 2-hour videos.
+- **FIX:** Alignment lookahead widened from 4 → 10 words; mismatches no longer cascade.
+- **FIX:** Alignment skips an event rather than mis-assigning it when no match is found.
+- **FIX:** TTS chunks now split on sentence boundaries, preventing mid-sentence seam artifacts.
+- **FIX:** Cache validation checks minimum file size, catching truncated downloads.
+- **FIX:** Page transitions fire after the last complete sentence, not just the last word.
+- **FIX:** `os.startfile` replaced with cross-platform `subprocess` call (macOS/Linux support).
+- **NEW:** Chapter markers (`.ffmetadata`) embedded in the MP4 at each heading.
+- **NEW:** Blurred background mode for non-16:9 PDFs.
+- **NEW:** Karaoke line-context mode.
+- **NEW:** Dual-voice heading support.
+- **NEW:** Ligature normalization in alignment (`ﬁ` → `fi`, `ﬂ` → `fl`).
+- **NEW:** Verification summary in the log after alignment (drift check, first/last word timestamps).
+- **NEW:** Per-chunk real duration cached in manifest — reruns skip re-measuring.
 
-1. Reproduce it with **Preview mode** on a public PDF if possible.
-2. Copy the full **Progress Log** text.
-3. Open an issue with the log and a short description.
-
-Feature requests are welcome too — please open an issue first to discuss before sending a large PR.
+### v1.0
+- Initial release
 
 ---
 
-## 📜 License
+## 📄 License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — do whatever you want with it.
 
 ---
 
-## 🙏 Acknowledgements
-
-- [**edge-tts**](https://github.com/rany2/edge-tts) — free Microsoft Edge neural voices
-- [**PyMuPDF**](https://pymupdf.readthedocs.io/) — PDF rendering and text extraction
-- [**FFmpeg**](https://ffmpeg.org/) — video/audio encoding
-- [**libass**](https://github.com/libass/libass) — the ASS subtitle renderer that draws the highlights
+<p align="center">
+  Made by <a href="https://github.com/israk404">israk404</a> •
+  <a href="https://github.com/israk404/pdftotts">github.com/israk404/pdftotts</a>
+</p>
